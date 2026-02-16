@@ -1,0 +1,6 @@
+[Unit]
+Description=Additional Pylons Load Monitor
+
+[Service]
+Type=oneshot
+ExecStart=%h/.claude/pylons/pylons-monitor.sh
