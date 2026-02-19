@@ -2,13 +2,14 @@
 set -euo pipefail
 
 # StarCraft Hooks Installer for Claude Code
-# Copies sounds and scripts to ~/.claude/, optionally sets up the pylons load monitor.
+# Copies sounds and scripts to ~/.claude/, optionally sets up system monitors.
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 SOUNDS_DIR="$CLAUDE_DIR/sounds"
 SCRIPTS_DIR="$CLAUDE_DIR/scripts"
 PYLONS_DIR="$CLAUDE_DIR/pylons"
+MINERALS_DIR="$CLAUDE_DIR/minerals"
 
 echo "=== StarCraft Hooks for Claude Code ==="
 echo ""
@@ -32,18 +33,35 @@ mkdir -p "$PYLONS_DIR"
 cp "$REPO_DIR"/pylons/pylons-monitor.sh "$PYLONS_DIR/"
 chmod +x "$PYLONS_DIR/pylons-monitor.sh"
 
+# --- Minerals ---
+echo "Installing minerals monitor to $MINERALS_DIR/..."
+mkdir -p "$MINERALS_DIR"
+cp "$REPO_DIR"/minerals/minerals-monitor.sh "$MINERALS_DIR/"
+chmod +x "$MINERALS_DIR/minerals-monitor.sh"
+
 if [ "$(uname)" = "Linux" ] && command -v systemctl >/dev/null 2>&1; then
+    SYSTEMD_DIR="$HOME/.config/systemd/user"
+    mkdir -p "$SYSTEMD_DIR"
+
     echo ""
     read -p "Set up pylons systemd timer? (monitors load average) [y/N] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        SYSTEMD_DIR="$HOME/.config/systemd/user"
-        mkdir -p "$SYSTEMD_DIR"
         cp "$REPO_DIR"/pylons/pylons-monitor.service "$SYSTEMD_DIR/"
         cp "$REPO_DIR"/pylons/pylons-monitor.timer "$SYSTEMD_DIR/"
         systemctl --user daemon-reload
         systemctl --user enable --now pylons-monitor.timer
         echo "  Pylons monitor enabled! Edit $PYLONS_DIR/pylons-monitor.sh to adjust threshold."
+    fi
+
+    read -p "Set up minerals systemd timer? (monitors RAM usage) [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        cp "$REPO_DIR"/minerals/minerals-monitor.service "$SYSTEMD_DIR/"
+        cp "$REPO_DIR"/minerals/minerals-monitor.timer "$SYSTEMD_DIR/"
+        systemctl --user daemon-reload
+        systemctl --user enable --now minerals-monitor.timer
+        echo "  Minerals monitor enabled! Edit $MINERALS_DIR/minerals-monitor.sh to adjust thresholds."
     fi
 fi
 

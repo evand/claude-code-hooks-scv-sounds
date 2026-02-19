@@ -1,0 +1,6 @@
+[Unit]
+Description=Not Enough Minerals RAM Monitor
+
+[Service]
+Type=oneshot
+ExecStart=%h/.claude/minerals/minerals-monitor.sh
